@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 type Props = {
   monthLabel: string
@@ -8,10 +8,10 @@ type Props = {
   nextMonthHref: string
   weekdays: string[]
   year: number
-  monthIndex: number // 0-11
+  monthIndex: number
   dim: number
-  firstWeekday: number // 0-6
-  totalCells: number // usually 42
+  firstWeekday: number
+  totalCells: number
   todayKey: string
   totalsByDay: Record<string, number>
   saveDay: (formData: FormData) => void | Promise<void>
@@ -26,14 +26,12 @@ function dayISODate(year: number, monthIndex: number, day: number) {
 }
 
 function formatNiceDay(iso: string) {
-  // iso = YYYY-MM-DD
   const [y, m, d] = iso.split('-').map(Number)
   const dt = new Date(y, m - 1, d)
   return dt.toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
   })
 }
 
@@ -51,20 +49,11 @@ export default function CalendarClient({
   totalsByDay,
   saveDay,
 }: Props) {
-  // Bottom sheet state
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [selectedDrinks, setSelectedDrinks] = useState<number>(0)
 
-  // Today quick editor state
   const todayValue = totalsByDay[todayKey] ?? 0
   const [todayDrinks, setTodayDrinks] = useState<number>(todayValue)
-
-  // If totalsByDay changes (after redirect refresh), keep todayDrinks in sync
-  // (simple approach: recompute when month changes or todayKey changes)
-  useMemo(() => {
-    setTodayDrinks(todayValue)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayKey, todayValue, monthLabel])
 
   function clamp(n: number) {
     return Math.max(0, Math.min(50, n))
@@ -95,100 +84,52 @@ export default function CalendarClient({
   }
 
   return (
-    <main style={{ padding: 16, maxWidth: 900, margin: '0 auto' }}>
+    <main style={{ padding: 12, maxWidth: 700, margin: '0 auto' }}>
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-          gap: 12,
-        }}
-      >
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{monthLabel}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{monthLabel}</h1>
 
-        <div style={{ display: 'flex', gap: 10 }}>
-          <a
-            href={prevMonthHref}
-            style={{
-              padding: '10px 12px',
-              border: '1px solid #222',
-              borderRadius: 10,
-              textDecoration: 'none',
-            }}
-          >
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a href={prevMonthHref} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8 }}>
             Prev
           </a>
-          <a
-            href={nextMonthHref}
-            style={{
-              padding: '10px 12px',
-              border: '1px solid #222',
-              borderRadius: 10,
-              textDecoration: 'none',
-            }}
-          >
+          <a href={nextMonthHref} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8 }}>
             Next
           </a>
         </div>
       </div>
 
-      {/* Today - mobile friendly stepper */}
+      {/* Today */}
       <section
         style={{
-          marginTop: 12,
-          padding: 14,
-          border: '1px solid #222',
-          borderRadius: 12,
-          position: 'sticky',
-          top: 8,
-          background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(6px)',
-          zIndex: 5,
+          marginTop: 10,
+          padding: 12,
+          border: '1px solid #ddd',
+          borderRadius: 10,
+          background: '#fff',
         }}
       >
-        <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 10 }}>
+        <div style={{ fontSize: 14, marginBottom: 8 }}>
           How many drinks did you have today?
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setTodayDrinks((v) => clamp(v - 1))}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              border: '1px solid #333',
-              fontSize: 20,
-            }}
-            aria-label="Decrease today drinks"
+            style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid #ccc' }}
           >
             -
           </button>
 
-          <div
-            style={{
-              minWidth: 56,
-              textAlign: 'center',
-              fontSize: 22,
-              fontWeight: 700,
-            }}
-          >
+          <div style={{ minWidth: 40, textAlign: 'center', fontSize: 20, fontWeight: 700 }}>
             {todayDrinks}
           </div>
 
           <button
             type="button"
             onClick={() => setTodayDrinks((v) => clamp(v + 1))}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              border: '1px solid #333',
-              fontSize: 20,
-            }}
-            aria-label="Increase today drinks"
+            style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid #ccc' }}
           >
             +
           </button>
@@ -196,31 +137,24 @@ export default function CalendarClient({
           <button
             type="button"
             onClick={submitToday}
-            style={{
-              padding: '12px 14px',
-              borderRadius: 10,
-              border: '1px solid #333',
-              fontWeight: 600,
-            }}
+            style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #ccc' }}
           >
             Save
           </button>
-
-          <div style={{ opacity: 0.7, fontSize: 12 }}>Tap any day below to edit it.</div>
         </div>
       </section>
 
-      {/* Weekday labels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 12 }}>
+      {/* Weekdays */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 10 }}>
         {weekdays.map((w) => (
-          <div key={w} style={{ opacity: 0.75, fontSize: 12, paddingLeft: 6 }}>
+          <div key={w} style={{ fontSize: 11, textAlign: 'center' }}>
             {w}
           </div>
         ))}
       </div>
 
-      {/* Calendar grid - tap to edit */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 6 }}>
+      {/* Calendar Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginTop: 4 }}>
         {Array.from({ length: totalCells }).map((_, idx) => {
           const dayNum = idx - firstWeekday + 1
           const inMonth = dayNum >= 1 && dayNum <= dim
@@ -230,10 +164,9 @@ export default function CalendarClient({
               <div
                 key={idx}
                 style={{
-                  minHeight: 62,
-                  border: '1px solid #1a1a1a',
-                  borderRadius: 12,
-                  opacity: 0.35,
+                  height: 48,
+                  border: '1px solid #eee',
+                  borderRadius: 10,
                 }}
               />
             )
@@ -249,154 +182,63 @@ export default function CalendarClient({
               type="button"
               onClick={() => openEditor(dayKey)}
               style={{
-                minHeight: 62,
-                width: '100%',
-                border: isToday ? '1px solid #666' : '1px solid #222',
-                borderRadius: 12,
-                padding: 10,
-                textAlign: 'left',
+                height: 48,
+                border: isToday ? '1px solid #666' : '1px solid #ddd',
+                borderRadius: 10,
+                padding: 6,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: 6,
+                textAlign: 'left',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{dayNum}</div>
-                <div style={{ opacity: 0.85, fontSize: 13 }}>{drinks}</div>
-              </div>
-
-              <div style={{ opacity: 0.7, fontSize: 12 }}>{drinks === 1 ? 'drink' : 'drinks'}</div>
+              <div style={{ fontWeight: 600, fontSize: 12 }}>{dayNum}</div>
+              <div style={{ fontSize: 11, opacity: 0.7 }}>{drinks}</div>
             </button>
           )
         })}
       </div>
 
-      {/* Bottom sheet editor */}
+      {/* Bottom Sheet */}
       {selectedDay && (
         <>
-          {/* Overlay */}
           <div
             onClick={closeEditor}
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.55)',
-              zIndex: 50,
+              background: 'rgba(0,0,0,0.4)',
             }}
           />
 
-          {/* Sheet */}
           <div
             style={{
               position: 'fixed',
               left: 0,
               right: 0,
               bottom: 0,
-              zIndex: 60,
+              background: '#fff',
+              padding: 16,
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
-              border: '1px solid #222',
-              background: '#0b0b0b',
-              padding: 16,
-              maxWidth: 900,
-              margin: '0 auto',
+              boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 14, opacity: 0.8 }}>Edit day</div>
-                <div style={{ fontSize: 16, fontWeight: 700 }}>{formatNiceDay(selectedDay)}</div>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeEditor}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  border: '1px solid #333',
-                  fontSize: 18,
-                }}
-                aria-label="Close editor"
-              >
-                ✕
-              </button>
+            <div style={{ fontSize: 14, marginBottom: 10 }}>
+              {formatNiceDay(selectedDay)}
             </div>
 
-            <div style={{ marginTop: 14, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setSelectedDrinks((v) => clamp(v - 1))}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  border: '1px solid #333',
-                  fontSize: 22,
-                }}
-                aria-label="Decrease drinks"
-              >
-                -
-              </button>
-
-              <div style={{ minWidth: 64, textAlign: 'center', fontSize: 28, fontWeight: 800 }}>
-                {selectedDrinks}
-              </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button onClick={() => setSelectedDrinks((v) => clamp(v - 1))}>-</button>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{selectedDrinks}</div>
+              <button onClick={() => setSelectedDrinks((v) => clamp(v + 1))}>+</button>
 
               <button
-                type="button"
-                onClick={() => setSelectedDrinks((v) => clamp(v + 1))}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  border: '1px solid #333',
-                  fontSize: 22,
-                }}
-                aria-label="Increase drinks"
-              >
-                +
-              </button>
-
-              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-                {[0, 1, 2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setSelectedDrinks(n)}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 12,
-                      border: '1px solid #333',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginTop: 14, display: 'flex', gap: 10 }}>
-              <button
-                type="button"
                 onClick={submitSelectedDay}
-                style={{
-                  flex: 1,
-                  padding: '14px 14px',
-                  borderRadius: 12,
-                  border: '1px solid #333',
-                  fontWeight: 700,
-                }}
+                style={{ marginLeft: 'auto', padding: '8px 12px' }}
               >
                 Save
               </button>
-            </div>
-
-            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.7 }}>
-              Tip: tap outside this panel to close it.
             </div>
           </div>
         </>
