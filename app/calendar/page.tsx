@@ -1,3 +1,5 @@
+import CalendarClient from "./CalendarClient";
+
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -64,8 +66,12 @@ export default async function CalendarPage({
 
   // Use real month boundaries: [monthStart, nextMonthStart)
   const monthStart = dayISODate(year, monthIndex, 1);
-  const nextMonth = firstDayOfNextMonth(year, monthIndex);
-  const monthEndExclusive = dayISODate(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+  const nextMonthDate = firstDayOfNextMonth(year, monthIndex);
+  const monthEndExclusive = dayISODate(
+    nextMonthDate.getFullYear(),
+    nextMonthDate.getMonth(),
+    1
+  );
 
   const { data: rows, error } = await supabase
     .from("daily_drink_totals")
@@ -77,7 +83,9 @@ export default async function CalendarPage({
     return (
       <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
         <h1 style={{ fontSize: 28, fontWeight: 700 }}>Calendar</h1>
-        <p style={{ marginTop: 12, opacity: 0.8 }}>Error loading calendar: {error.message}</p>
+        <p style={{ marginTop: 12, opacity: 0.8 }}>
+          Error loading calendar: {error.message}
+        </p>
       </main>
     );
   }
@@ -87,10 +95,16 @@ export default async function CalendarPage({
     totalsByDay.set(r.day, Number(r.drinks || 0));
   });
 
+  // IMPORTANT: client components can't receive a Map. Convert to a plain object.
+  const totalsObj: Record<string, number> = Object.fromEntries(totalsByDay);
+
   const prev = addMonths(year, monthIndex, -1);
   const next = addMonths(year, monthIndex, 1);
 
-  const monthLabel = first.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const monthLabel = first.toLocaleString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
   const firstWeekday = first.getDay();
   const totalCells = 42;
 
@@ -124,6 +138,7 @@ export default async function CalendarPage({
 
     const monthKey = monthKeyFromDate(new Date(year, monthIndex, 1));
 
+    // We redirect either way so the UI refreshes with correct data
     if (error) {
       redirect(`/calendar?month=${monthKey}`);
     }
@@ -131,127 +146,29 @@ export default async function CalendarPage({
     redirect(`/calendar?month=${monthKey}`);
   }
 
+  // Build month nav hrefs on the server
+  const prevMonthHref = `/calendar?month=${monthKeyFromDate(
+    new Date(prev.year, prev.monthIndex, 1)
+  )}`;
+  const nextMonthHref = `/calendar?month=${monthKeyFromDate(
+    new Date(next.year, next.monthIndex, 1)
+  )}`;
+
+  // ✅ Render the client component and pass it what it needs
   return (
-    <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>{monthLabel}</h1>
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <a
-            href={`/calendar?month=${monthKeyFromDate(new Date(prev.year, prev.monthIndex, 1))}`}
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #222",
-              borderRadius: 10,
-              textDecoration: "none",
-            }}
-          >
-            Prev
-          </a>
-          <a
-            href={`/calendar?month=${monthKeyFromDate(new Date(next.year, next.monthIndex, 1))}`}
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #222",
-              borderRadius: 10,
-              textDecoration: "none",
-            }}
-          >
-            Next
-          </a>
-        </div>
-      </div>
-
-      <section style={{ marginTop: 16, padding: 16, border: "1px solid #222", borderRadius: 12 }}>
-        <div style={{ fontSize: 16, opacity: 0.85, marginBottom: 10 }}>
-          How many drinks did you have today?
-        </div>
-
-        <form action={saveDay} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input type="hidden" name="day" value={todayKey} />
-          <input
-            name="drinks"
-            type="number"
-            min={0}
-            max={50}
-            defaultValue={totalsByDay.get(todayKey) ?? 0}
-            style={{ width: 120, padding: 10, border: "1px solid #333", borderRadius: 8 }}
-          />
-          <button type="submit" style={{ padding: "10px 14px", borderRadius: 8 }}>
-            Save
-          </button>
-          <div style={{ opacity: 0.7, fontSize: 13 }}>You can edit any day below too.</div>
-        </form>
-      </section>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginTop: 16 }}>
-        {WEEKDAYS.map((w) => (
-          <div key={w} style={{ opacity: 0.75, fontSize: 13, paddingLeft: 6 }}>
-            {w}
-          </div>
-        ))}
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginTop: 8 }}>
-        {Array.from({ length: totalCells }).map((_, idx) => {
-          const dayNum = idx - firstWeekday + 1;
-          const inMonth = dayNum >= 1 && dayNum <= dim;
-
-          if (!inMonth) {
-            return (
-              <div
-                key={idx}
-                style={{
-                  height: 110,
-                  border: "1px solid #1a1a1a",
-                  borderRadius: 12,
-                  opacity: 0.35,
-                }}
-              />
-            );
-          }
-
-          const dayKey = dayISODate(year, monthIndex, dayNum);
-          const drinks = totalsByDay.get(dayKey) ?? 0;
-          const isToday = dayKey === todayKey;
-
-          return (
-            <div
-              key={idx}
-              style={{
-                height: 110,
-                border: isToday ? "1px solid #666" : "1px solid #222",
-                borderRadius: 12,
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                gap: 8,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <div style={{ fontWeight: 700 }}>{dayNum}</div>
-                <div style={{ opacity: 0.8, fontSize: 13 }}>{drinks} drinks</div>
-              </div>
-
-              <form action={saveDay} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input type="hidden" name="day" value={dayKey} />
-                <input
-                  name="drinks"
-                  type="number"
-                  min={0}
-                  max={50}
-                  defaultValue={drinks}
-                  style={{ width: 70, padding: 8, border: "1px solid #333", borderRadius: 8 }}
-                />
-                <button type="submit" style={{ padding: "8px 10px", borderRadius: 8 }}>
-                  Save
-                </button>
-              </form>
-            </div>
-          );
-        })}
-      </div>
-    </main>
+    <CalendarClient
+      monthLabel={monthLabel}
+      prevMonthHref={prevMonthHref}
+      nextMonthHref={nextMonthHref}
+      weekdays={WEEKDAYS}
+      year={year}
+      monthIndex={monthIndex}
+      dim={dim}
+      firstWeekday={firstWeekday}
+      totalCells={totalCells}
+      todayKey={todayKey}
+      totalsByDay={totalsObj}
+      saveDay={saveDay}
+    />
   );
 }
