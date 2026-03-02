@@ -84,10 +84,10 @@ export default function CalendarClient({
   }
 
   // Explicit button styling so dark mode never makes these unreadable
-  const btnStyle: React.CSSProperties = {
+  const smallBtn: React.CSSProperties = {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: 10,
     border: '1px solid #cfcfcf',
     background: '#f6f6f6',
     color: '#111',
@@ -95,10 +95,10 @@ export default function CalendarClient({
     lineHeight: '36px',
   }
 
-  const linkStyle: React.CSSProperties = {
+  const headerLink: React.CSSProperties = {
     padding: '8px 10px',
-    border: '1px solid #e5e5e5',
-    borderRadius: 8,
+    border: '1px solid #666',
+    borderRadius: 10,
     textDecoration: 'none',
     color: '#fff',
   }
@@ -110,10 +110,10 @@ export default function CalendarClient({
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{monthLabel}</h1>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href={prevMonthHref} style={{ ...linkStyle, borderColor: '#666' }}>
+          <a href={prevMonthHref} style={headerLink}>
             Prev
           </a>
-          <a href={nextMonthHref} style={{ ...linkStyle, borderColor: '#666' }}>
+          <a href={nextMonthHref} style={headerLink}>
             Next
           </a>
         </div>
@@ -125,25 +125,25 @@ export default function CalendarClient({
           marginTop: 10,
           padding: 12,
           border: '1px solid #ddd',
-          borderRadius: 10,
+          borderRadius: 12,
           background: '#ffffff',
           color: '#111111',
         }}
       >
-        <div style={{ fontSize: 14, marginBottom: 8, color: '#111' }}>
+        <div style={{ fontSize: 14, marginBottom: 8, color: '#111', fontWeight: 600 }}>
           How many drinks did you have today?
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setTodayDrinks((v) => clamp(v - 1))} style={btnStyle}>
-            -
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => setTodayDrinks((v) => clamp(v - 1))} style={smallBtn}>
+            –
           </button>
 
-          <div style={{ minWidth: 40, textAlign: 'center', fontSize: 20, fontWeight: 700, color: '#111' }}>
+          <div style={{ minWidth: 40, textAlign: 'center', fontSize: 22, fontWeight: 800, color: '#111' }}>
             {todayDrinks}
           </div>
 
-          <button type="button" onClick={() => setTodayDrinks((v) => clamp(v + 1))} style={btnStyle}>
+          <button type="button" onClick={() => setTodayDrinks((v) => clamp(v + 1))} style={smallBtn}>
             +
           </button>
 
@@ -151,12 +151,13 @@ export default function CalendarClient({
             type="button"
             onClick={submitToday}
             style={{
-              padding: '8px 10px',
-              borderRadius: 8,
-              border: '1px solid #cfcfcf',
+              padding: '10px 14px',
+              borderRadius: 10,
+              border: 'none',
               background: '#111',
               color: '#fff',
-              fontWeight: 600,
+              fontWeight: 800,
+              fontSize: 16,
             }}
           >
             Save
@@ -186,7 +187,7 @@ export default function CalendarClient({
                 style={{
                   height: 48,
                   border: '1px solid #333',
-                  borderRadius: 10,
+                  borderRadius: 12,
                   opacity: 0.35,
                 }}
               />
@@ -205,8 +206,8 @@ export default function CalendarClient({
               style={{
                 height: 48,
                 border: isToday ? '1px solid #fff' : '1px solid #666',
-                borderRadius: 10,
-                padding: 6,
+                borderRadius: 12,
+                padding: 7,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -215,8 +216,8 @@ export default function CalendarClient({
                 color: 'inherit',
               }}
             >
-              <div style={{ fontWeight: 700, fontSize: 12 }}>{dayNum}</div>
-              <div style={{ fontSize: 11, opacity: 0.8 }}>{drinks}</div>
+              <div style={{ fontWeight: 800, fontSize: 12 }}>{dayNum}</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>{drinks}</div>
             </button>
           )
         })}
@@ -230,7 +231,7 @@ export default function CalendarClient({
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.4)',
+              background: 'rgba(0,0,0,0.45)',
             }}
           />
 
@@ -242,29 +243,45 @@ export default function CalendarClient({
               bottom: 0,
               background: '#fff',
               color: '#111',
-              padding: 16,
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              boxShadow: '0 -4px 12px rgba(0,0,0,0.15)',
+              padding: '18px 18px calc(28px + env(safe-area-inset-bottom))',
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              boxShadow: '0 -10px 28px rgba(0,0,0,0.22)',
             }}
           >
-            <div style={{ fontSize: 14, marginBottom: 10 }}>{formatNiceDay(selectedDay)}</div>
+            {/* Grab handle */}
+            <div
+              style={{
+                width: 44,
+                height: 5,
+                borderRadius: 999,
+                background: '#d9d9d9',
+                margin: '0 auto 14px',
+              }}
+            />
 
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div style={{ fontSize: 16, marginBottom: 14, fontWeight: 800 }}>
+              {formatNiceDay(selectedDay)}
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={() => setSelectedDrinks((v) => clamp(v - 1))}
                 style={{
-                  ...btnStyle,
-                  width: 44,
-                  height: 44,
-                  lineHeight: '44px',
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  border: '1px solid #ddd',
+                  background: '#f5f5f5',
+                  fontSize: 26,
+                  color: '#111',
                 }}
               >
-                -
+                –
               </button>
 
-              <div style={{ fontSize: 22, fontWeight: 700, minWidth: 40, textAlign: 'center' }}>
+              <div style={{ fontSize: 30, fontWeight: 900, minWidth: 52, textAlign: 'center' }}>
                 {selectedDrinks}
               </div>
 
@@ -272,10 +289,13 @@ export default function CalendarClient({
                 type="button"
                 onClick={() => setSelectedDrinks((v) => clamp(v + 1))}
                 style={{
-                  ...btnStyle,
-                  width: 44,
-                  height: 44,
-                  lineHeight: '44px',
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  border: '1px solid #ddd',
+                  background: '#f5f5f5',
+                  fontSize: 26,
+                  color: '#111',
                 }}
               >
                 +
@@ -286,12 +306,13 @@ export default function CalendarClient({
                 onClick={submitSelectedDay}
                 style={{
                   marginLeft: 'auto',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: '1px solid #111',
+                  padding: '14px 18px',
+                  borderRadius: 14,
+                  border: 'none',
                   background: '#111',
                   color: '#fff',
-                  fontWeight: 700,
+                  fontSize: 16,
+                  fontWeight: 900,
                 }}
               >
                 Save
